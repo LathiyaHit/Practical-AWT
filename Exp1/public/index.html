@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Tracker - Real-time EventEmitter Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="main-container">
+    <div class="card">
+      <h1>Event Tracker</h1>
+      <p class="subtitle">Real-time EventEmitter Dashboard</p>
+      
+      <div class="input-section">
+        <input type="text" id="usernameInput" placeholder="Username (e.g. Rahul)" class="input-field">
+        <input type="text" id="itemInput" placeholder="Item (for purchases)" class="input-field">
+      </div>
+
+      <div class="button-grid">
+        <button id="loginBtn" class="btn btn-green">Login</button>
+        <button id="logoutBtn" class="btn btn-red">Logout</button>
+        <button id="purchaseBtn" class="btn btn-orange">Purchase</button>
+        <button id="updateProfileBtn" class="btn btn-blue">Update Profile</button>
+        <button id="viewPurchasesBtn" class="btn btn-purple">View Purchases</button>
+        <button id="viewSummaryBtn" class="btn btn-dark" onclick="toggleConsole()">View Summary</button>
+      </div>
+
+      <div id="message" class="message"></div>
+    </div>
+
+    <div id="consoleSection" class="console-section hidden">
+      <div class="console-header">SYSTEM CONSOLE</div>
+      <div id="consoleOutput" class="console-output">
+        <div id="eventSummary" class="event-summary">
+          <div class="summary-title">EVENT SUMMARY REPORT</div>
+          <div class="summary-line">─────────────────────</div>
+          <div class="summary-item">
+            <span>User Logins:</span>
+            <span id="loginCount" class="count">0</span>
+          </div>
+          <div class="summary-item">
+            <span>User Logouts:</span>
+            <span id="logoutCount" class="count">0</span>
+          </div>
+          <div class="summary-item">
+            <span>User Purchases:</span>
+            <span id="purchaseCount" class="count">0</span>
+          </div>
+          <div class="summary-item">
+            <span>Profile Updates:</span>
+            <span id="updateCount" class="count">0</span>
+          </div>
+        </div>
+        <div id="activityLog" class="activity-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
