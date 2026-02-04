@@ -1,224 +1,75 @@
-let currentUsername = null;
-let isLoggedIn = false;
+let user = "";
 
-const usernameInput = document.getElementById('usernameInput');
-const itemInput = document.getElementById('itemInput');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const purchaseBtn = document.getElementById('purchaseBtn');
-const updateProfileBtn = document.getElementById('updateProfileBtn');
-const viewPurchasesBtn = document.getElementById('viewPurchasesBtn');
-const messageDiv = document.getElementById('message');
-const consoleSection = document.getElementById('consoleSection');
-const eventSummary = document.getElementById('eventSummary');
-const activityLog = document.getElementById('activityLog');
+function login() {
+  user = document.getElementById("username").value;
 
-document.addEventListener('DOMContentLoaded', () => {
-  loginBtn.addEventListener('click', handleLogin);
-  logoutBtn.addEventListener('click', handleLogout);
-  purchaseBtn.addEventListener('click', handlePurchase);
-  updateProfileBtn.addEventListener('click', handleUpdateProfile);
-  viewPurchasesBtn.addEventListener('click', handleViewPurchases);
-  usernameInput.addEventListener('input', updateUsername);
-  
-  loadActivity();
-});
+  fetch("/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: user })
+  });
 
-function updateUsername() {
-  currentUsername = usernameInput.value.trim();
+  document.getElementById("welcome").innerText = "Welcome, " + user;
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
 }
 
-function toggleConsole() {
-  consoleSection.classList.toggle('hidden');
-  if (!consoleSection.classList.contains('hidden')) {
-    loadActivity();
-  }
+function showPurchase() {
+  document.getElementById("purchaseBox").classList.remove("hidden");
+  document.getElementById("updateBox").classList.add("hidden");
 }
 
-
-async function handleLogin() {
-  const username = usernameInput.value.trim();
-  
-  if (!username) {
-    showMessage('Please enter a username', 'error');
-    return;
-  }
-
-  try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      isLoggedIn = true;
-      currentUsername = username;
-      showMessage(`✓ Welcome ${username}!`, 'success');
-      loginBtn.textContent = `Logged in: ${username}`;
-      loginBtn.disabled = true;
-      usernameInput.disabled = true;
-      loadActivity();
-    } else {
-      showMessage(data.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Login error: ' + error.message, 'error');
-  }
+function showUpdate() {
+  document.getElementById("updateBox").classList.remove("hidden");
+  document.getElementById("purchaseBox").classList.add("hidden");
 }
 
-async function handleLogout() {
-  if (!isLoggedIn) {
-    showMessage('Not logged in', 'info');
-    return;
-  }
+function showImage() {
+  const item = document.getElementById("item").value;
+  const img = document.getElementById("itemImage");
 
-  try {
-    const response = await fetch('/api/logout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: currentUsername })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      isLoggedIn = false;
-      showMessage('✓ Logged out successfully', 'success');
-      loginBtn.textContent = 'Login';
-      loginBtn.disabled = false;
-      usernameInput.disabled = false;
-      usernameInput.value = '';
-      itemInput.value = '';
-      currentUsername = null;
-      loadActivity();
-    }
-  } catch (error) {
-    showMessage('Logout error: ' + error.message, 'error');
-  }
+  if (item === "Laptop") img.src = "https://via.placeholder.com/300?text=Laptop";
+  if (item === "Phone") img.src = "https://via.placeholder.com/300?text=Phone";
+  if (item === "Headphones") img.src = "https://via.placeholder.com/300?text=Headphones";
 }
 
-async function handlePurchase() {
-  const username = usernameInput.value.trim();
-  const item = itemInput.value.trim();
-  
-  if (!username) {
-    showMessage('Please enter a username', 'error');
-    return;
-  }
+function purchase() {
+  const item = document.getElementById("item").value;
 
-  if (!item) {
-    showMessage('Please enter an item name', 'error');
-    return;
-  }
+  fetch("/purchase", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: user, item })
+  });
 
-  try {
-    const response = await fetch('/api/purchase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, product: item })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      showMessage(`✓ ${username} purchased "${item}" for $${data.purchase.price}`, 'success');
-      itemInput.value = '';
-      loadActivity();
-    } else {
-      showMessage(data.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Purchase error: ' + error.message, 'error');
-  }
+  alert("Purchased: " + item);
 }
 
-async function handleUpdateProfile() {
-  const username = usernameInput.value.trim();
-  
-  if (!username) {
-    showMessage('Please enter a username', 'error');
-    return;
-  }
+function updateProfile() {
+  const newName = document.getElementById("newName").value;
 
-  const fullname = prompt('Enter full name:', username);
-  if (fullname === null) return;
+  fetch("/update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ oldName: user, newName })
+  });
 
-  const email = prompt('Enter email address:');
-  if (email === null) return;
-
-  try {
-    const response = await fetch('/api/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, fullname, email })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      showMessage(`✓ Profile updated for ${username}`, 'success');
-      loadActivity();
-    } else {
-      showMessage(data.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Update error: ' + error.message, 'error');
-  }
+  user = newName;
+  document.getElementById("welcome").innerText = "Welcome, " + user;
 }
 
-async function handleViewPurchases() {
-  const username = usernameInput.value.trim();
-  
-  if (!username) {
-    showMessage('Please enter a username', 'error');
-    return;
-  }
+function logout() {
+  fetch("/logout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: user })
+  });
 
-  try {
-    const response = await fetch(`/api/purchases?username=${username}`);
-    const data = await response.json();
-
-    if (data.success) {
-      if (data.purchases.length === 0) {
-        showMessage(`No purchases found for ${username}`, 'info');
-      } else {
-        let purchases = data.purchases.map(p => `• ${p.product} ($${p.price})`).join('\n');
-        alert(`Purchase History for ${username}:\n\n${purchases}`);
-      }
-      loadActivity();
-    } else {
-      showMessage(data.message, 'error');
-    }
-  } catch (error) {
-    showMessage('Error loading purchases: ' + error.message, 'error');
-  }
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
 }
 
-async function loadActivity() {
-  try {
-    const response = await fetch('/api/activity');
-    const data = await response.json();
-
-    if (data.success) {
-      const activity = data.activity;
-      
-      document.getElementById('loginCount').textContent = activity.login;
-      document.getElementById('logoutCount').textContent = activity.logout;
-      document.getElementById('purchaseCount').textContent = activity.purchase;
-      document.getElementById('updateCount').textContent = activity.profileUpdate;
-    }
-  } catch (error) {
-    console.error('Activity load error:', error);
-  }
-}
-
-function showMessage(message, type) {
-  messageDiv.textContent = message;
-  messageDiv.className = `message ${type}`;
-  setTimeout(() => {
-    messageDiv.className = 'message';
-  }, 3000);
+function viewSummary() {
+  fetch("/summary", { method: "POST" });
+  alert("Summary printed in terminal");
 }
