@@ -1,181 +1,125 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const url = require('url');
-
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const EventEmitter = require("events");
 
-const eventEmitter = new EventEmitter();
+const PORT = 3000;
+const emitter = new EventEmitter();
 
-const eventCount = {
-    login: 0,
-    logout: 0,
-    purchase: 0,
-    profileUpdate: 0
-};
+let loginCount = 0;
+let logoutCount = 0;
+let purchaseCount = 0;
+let updateCount = 0;
 
-eventEmitter.on("user-login", (username) => {
-    eventCount.login++;
-    console.log(`User logged in: ${username}`);
+emitter.on("login", (user) => {
+  loginCount++;
+  console.log("LOGIN:", user);
 });
 
-eventEmitter.on("user-logout", (username) => {
-    eventCount.logout++;
-    console.log(`User logged out: ${username}`)
-})
-
-eventEmitter.on("user-purchase", (username, item) => {
-    eventCount.purchase++;
-    console.log(`User ${username} purchased ${item}`);
+emitter.on("logout", (user) => {
+  logoutCount++;
+  console.log("LOGOUT:", user);
 });
 
-eventEmitter.on("profile-update", (username) => {
-    eventCount.profileUpdate++;
-    console.log(`User ${username} updated profile`);
+emitter.on("purchase", (user, item) => {
+  purchaseCount++;
+  console.log("PURCHASE:", user, "purchased", item);
 });
 
-eventEmitter.on("summary", () => {
-    console.log("\nEVENT SUMMARY REPORT");
-    console.log(`User Login Events: ${eventCount.login}`);
-    console.log(`User Logout Events: ${eventCount.logout}`);
-    console.log(`User Purchase Events: ${eventCount.purchase}`);
-    console.log(`Profile Update Events: ${eventCount.profileUpdate}`);
+emitter.on("update", (oldName, newName) => {
+  updateCount++;
+  console.log("UPDATE:", oldName, "→", newName);
 });
+
+emitter.on("summary", () => {
+  console.log("----- USER ACTIVITY SUMMARY -----");
+  console.log("Login Count   :", loginCount);
+  console.log("Logout Count  :", logoutCount);
+  console.log("Purchase Count:", purchaseCount);
+  console.log("Update Count  :", updateCount);
+  console.log("---------------------------------");
+});
+
+function serveStaticFile(filePath, res) {
+  const ext = path.extname(filePath);
+  const typeMap = {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "text/javascript",
+    ".png": "image/png",
+    ".jpg": "image/jpeg"
+  };
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      res.end("File not found");
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": typeMap[ext] || "text/plain"
+    });
+    res.end(data);
+  });
+}
+
+function getRequestBody(req, callback) {
+  let body = "";
+  req.on("data", chunk => body += chunk);
+  req.on("end", () => callback(JSON.parse(body || "{}")));
+}
 
 const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+  if (req.method === "POST") {
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.url === "/login") {
+      return getRequestBody(req, body => {
+        emitter.emit("login", body.username);
+        res.writeHead(200);
+        res.end();
+      });
+    }
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
+    if (req.url === "/purchase") {
+      return getRequestBody(req, body => {
+        emitter.emit("purchase", body.username, body.item);
+        res.writeHead(200);
+        res.end();
+      });
+    }
 
-  if (pathname === '/' || pathname === '/index.html') {
-    const filePath = path.join(__dirname, 'public', 'index.html');
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('404 Not Found');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(data);
-    });
-  } else if (pathname === '/style.css') {
-    const filePath = path.join(__dirname, 'public', 'style.css');
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('404 Not Found');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/css' });
-      res.end(data);
-    });
-  } else if (pathname === '/script.js') {
-    const filePath = path.join(__dirname, 'public', 'script.js');
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('404 Not Found');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'application/javascript' });
-      res.end(data);
-    });
+    if (req.url === "/update") {
+      return getRequestBody(req, body => {
+        emitter.emit("update", body.oldName, body.newName);
+        res.writeHead(200);
+        res.end();
+      });
+    }
+
+    if (req.url === "/logout") {
+      return getRequestBody(req, body => {
+        emitter.emit("logout", body.username);
+        res.writeHead(200);
+        res.end();
+      });
+    }
+
+    if (req.url === "/summary") {
+      emitter.emit("summary");
+      res.writeHead(200);
+      return res.end();
+    }
   }
 
-  else if (pathname === '/api/login' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        eventEmitter.emit('user-login', data.username);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'Logged in successfully' }));
-      } catch (error) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, message: 'Invalid request' }));
-      }
-    });
-  }
-  else if (pathname === '/api/logout' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        eventEmitter.emit('user-logout', data.username);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'Logged out successfully' }));
-      } catch (error) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, message: 'Invalid request' }));
-      }
-    });
-  }
-  else if (pathname === '/api/purchase' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        eventEmitter.emit('user-purchase', data.username, data.product);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'Purchase successful' }));
-      } catch (error) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, message: 'Invalid request' }));
-      }
-    });
-  }
-  else if (pathname === '/api/profile' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        eventEmitter.emit('profile-update', data.username);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'Profile updated successfully' }));
-      } catch (error) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, message: 'Invalid request' }));
-      }
-    });
-  }
-  else if (pathname === '/api/activity' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, activity: eventCount }));
-  }
-  else if (pathname === '/api/summary' && req.method === 'GET') {
-    eventEmitter.emit('summary');
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, eventCount }));
-  }
-  else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('404 Not Found');
-  }
+  let filePath = path.join(
+    __dirname,
+    "public",
+    req.url === "/" ? "index.html" : req.url
+  );
+
+  serveStaticFile(filePath, res);
 });
 
-const PORT = 3000;
 server.listen(PORT, () => {
-  console.log('\nServer running at http://localhost:' + PORT + '/');
-  console.log('EventEmitter is active and tracking events\n');
+  console.log("Server running at http://localhost:" + PORT);
 });
