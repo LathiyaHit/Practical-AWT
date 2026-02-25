@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event Shop</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login-wrapper" id="loginBox">
+  <div class="login-card">
+    <h2>Login</h2>
+
+    <div class="field">
+      <label>Username</label>
+      <input id="username" type="text" placeholder="Enter username">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" placeholder="Enter password">
+    </div>
+
+    <button class="login-btn" onclick="login()">Login</button>
+  </div>
+</div>
+
+<div id="dashboard" class="hidden">
+
+  <div class="topbar">
+    <h3 id="welcome">Welcome, User</h3>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="layout">
+
+    <div class="sidebar">
+      <button onclick="showPurchase()">Purchase</button>
+      <button onclick="showUpdate()">Update Profile</button>
+      <button onclick="viewSummary()">View Summary</button>
+    </div>
+
+    <div class="content">
+      <div id="purchaseBox" class="card">
+        <h3>Purchase Item</h3>
+
+        <select id="item" onchange="showImage()">
+          <option value="">Select item</option>
+          <option value="Laptop">Laptop</option>
+          <option value="Phone">Phone</option>
+          <option value="Headphones">Headphones</option>
+        </select>
+
+        <button class="action-btn" onclick="purchase()">Purchase</button>
+      </div>
+      
+      <div id="updateBox" class="card hidden">
+        <h3>Update Profile</h3>
+        <input id="newName" type="text" placeholder="New username">
+        <button class="action-btn" onclick="updateProfile()">Update</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

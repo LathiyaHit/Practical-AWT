@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Task Manager</h1>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <p>Pending Tasks</p>
+                <h2 id="pendingCount">0</h2>
+            </div>
+            <div class="stat-box">
+                <p>Completed Tasks</p>
+                <h2 id="completedCount">0</h2>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Add New Task</h2>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="taskTitle">Task Title:</label>
+                    <input type="text" id="taskTitle" placeholder="Enter task name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskDeadline">Deadline:</label>
+                    <input type="date" id="taskDeadline">
+                </div>
+
+                <button type="submit" class="btn-add">Add Task</button>
+            </form>
+        </div>
+
+        <div class="tasks-section">
+            <h2>Pending Tasks</h2>
+            <div id="pendingTasksList" class="task-list">
+                <p class="empty-message">No pending tasks</p>
+            </div>
+        </div>
+
+        <div class="tasks-section">
+            <h2>Completed Tasks</h2>
+            <div id="completedTasksList" class="task-list">
+                <p class="empty-message">No completed tasks</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
